@@ -3,10 +3,17 @@
  * Uses locally generated product images (no mock URLs).
  * Creates: brands, categories, products, variants, coupons, shipping, reviews, settings.
  */
+/// <reference types="node" />
 import * as Prisma from '@prisma/client'
 import { createHash } from 'crypto'
 import * as fs from 'fs'
 import * as path from 'path'
+import type * as cryptoType from 'crypto'
+import type * as fsType from 'fs'
+import type * as pathType from 'path'
+
+// Ensure editor/type-checker recognizes the Node globals in this standalone script
+declare const process: NodeJS.Process
 
 const db = new Prisma.PrismaClient()
 

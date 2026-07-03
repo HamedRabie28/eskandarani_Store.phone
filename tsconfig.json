@@ -27,6 +27,7 @@
         "./node_modules/.prisma/client"
       ]
     },
+    "ignoreDeprecations": "6.0",
     "plugins": [
       {
         "name": "next"
