@@ -113,7 +113,7 @@ export async function getAdminSession(): Promise<AdminUser | null> {
     where: { token },
     include: { user: true },
   })
-  if (!session) return null
+  if (!session || !session.user) return null
 
   // Check expiry
   if (session.expiresAt < new Date()) {

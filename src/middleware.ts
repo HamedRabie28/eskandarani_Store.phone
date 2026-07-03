@@ -38,7 +38,7 @@ export async function middleware(req: NextRequest) {
       include: { user: { select: { id: true, email: true, name: true, role: true } } },
     })
 
-    if (!session) {
+    if (!session || !session.user) {
       return NextResponse.json(
         { error: 'جلسة غير صالحة', code: 'INVALID_SESSION' },
         { status: 401 }

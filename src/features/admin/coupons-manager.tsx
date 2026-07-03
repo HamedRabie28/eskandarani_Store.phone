@@ -23,6 +23,8 @@ const COUPON_TYPES = [
   { value: 'FREE_SHIPPING', label: 'شحن مجاني', icon: Truck },
 ]
 
+type CouponType = 'PERCENTAGE' | 'FIXED' | 'FREE_SHIPPING'
+
 export function CouponsManager() {
   const { data, isLoading } = useAdminCoupons()
   const createMutation = useCreateCoupon()
@@ -32,8 +34,20 @@ export function CouponsManager() {
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<any | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
-  const [form, setForm] = useState({
-    code: '', description: '', type: 'PERCENTAGE' as const, value: 0,
+  const [form, setForm] = useState<{
+    code: string
+    description: string
+    type: CouponType
+    value: number
+    minSubtotal: number
+    maxDiscount: number
+    usageLimit: number
+    perUserLimit: number
+    startsAt: string
+    endsAt: string
+    isActive: boolean
+  }>({
+    code: '', description: '', type: 'PERCENTAGE', value: 0,
     minSubtotal: 0, maxDiscount: 0, usageLimit: 100, perUserLimit: 1,
     startsAt: new Date().toISOString().slice(0, 10),
     endsAt: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString().slice(0, 10),

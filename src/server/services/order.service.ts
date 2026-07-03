@@ -161,7 +161,9 @@ export const orderService = {
       await cartService.clear({ guestToken: input.guestToken })
     }
 
-    return this.toSummary(order.id)
+    const orderSummary = await this.toSummary(order.id)
+    if (!orderSummary) throw new Error('Order summary unavailable')
+    return orderSummary
   },
 
   async getById(id: string): Promise<OrderSummary | null> {
@@ -171,7 +173,13 @@ export const orderService = {
   async getByNumber(orderNumber: string, email?: string): Promise<OrderSummary | null> {
     const order = await db.order.findUnique({
       where: { orderNumber },
-      include: { items: true, address: true, statusHistory: { orderBy: { createdAt: 'asc' } }, notes_log: { orderBy: { createdAt: 'desc' } } },
+      include: {
+        items: true,
+        address: true,
+        user: { select: { email: true } },
+        statusHistory: { orderBy: { createdAt: 'asc' } },
+        notes_log: { orderBy: { createdAt: 'desc' } },
+      },
     })
     if (!order) return null
     if (email && order.guestEmail !== email && order.user?.email !== email) return null
@@ -184,7 +192,11 @@ export const orderService = {
       orderBy: { createdAt: 'desc' },
       include: { items: true, address: true, statusHistory: { orderBy: { createdAt: 'asc' } } },
     })
-    return Promise.all(orders.map(o => this.toSummary(o.id)))
+    return Promise.all(orders.map(async (o) => {
+      const summary = await this.toSummary(o.id)
+      if (!summary) throw new Error(`Order summary missing for ${o.id}`)
+      return summary
+    }))
   },
 
   async listRecent(limit = 10): Promise<OrderSummary[]> {
@@ -193,7 +205,11 @@ export const orderService = {
       take: limit,
       include: { items: true, address: true, statusHistory: { orderBy: { createdAt: 'asc' } } },
     })
-    return Promise.all(orders.map(o => this.toSummary(o.id)))
+    return Promise.all(orders.map(async (o) => {
+      const summary = await this.toSummary(o.id)
+      if (!summary) throw new Error(`Order summary missing for ${o.id}`)
+      return summary
+    }))
   },
 
   async updateStatus(orderId: string, status: OrderStatus, note?: string): Promise<OrderSummary> {
@@ -218,7 +234,9 @@ export const orderService = {
       }),
     ])
 
-    return this.toSummary(orderId)
+    const updatedSummary = await this.toSummary(orderId)
+    if (!updatedSummary) throw new Error('Order summary unavailable')
+    return updatedSummary
   },
 
   async cancel(orderId: string, reason: string): Promise<OrderSummary> {
@@ -253,7 +271,9 @@ export const orderService = {
         data: { orderId, status: 'CANCELLED', note: reason, createdAt: new Date() },
       })
     })
-    return this.toSummary(orderId)
+    const canceledSummary = await this.toSummary(orderId)
+    if (!canceledSummary) throw new Error('Order summary unavailable')
+    return canceledSummary
   },
 
   async addNote(orderId: string, note: string, isInternal = false): Promise<void> {

@@ -264,7 +264,6 @@ export function CheckoutPage() {
                     <RadioGroup value={shippingMethod} onValueChange={(v) => {
                       setShippingMethod(v)
                       const opt = shippingData?.options.find(o => o.code === v)
-                      setShippingCost(opt?.cost ?? 0)
                     }}>
                       <div className="space-y-2">
                         {shippingData?.options.map(opt => (

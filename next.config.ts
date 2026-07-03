@@ -1,7 +1,5 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  // No "output: standalone" — Vercel handles deployment automatically
+// No "output: standalone" — Vercel handles deployment automatically
+const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
