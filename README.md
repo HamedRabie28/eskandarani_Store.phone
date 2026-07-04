@@ -6,7 +6,7 @@
 
 ### 1. إعداد قاعدة البيانات
 
-SQLite يعمل محلياً فقط. على Vercel تحتاج PostgreSQL:
+هذا المشروع الآن مهيأ للعمل على PostgreSQL في Vercel.
 
 **الخيار الأسهل — Vercel Postgres:**
 1. اذهب إلى [vercel.com/dashboard](https://vercel.com/dashboard)
@@ -25,6 +25,8 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 ```
+
+> ملاحظة: لم يعد المشروع يدعم SQLite كمخطط افتراضي، لذا تحتاج PostgreSQL محلياً أو عبر Vercel أثناء التطوير.
 
 ### 3. إعداد Environment Variables على Vercel
 

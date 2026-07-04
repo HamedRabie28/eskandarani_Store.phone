@@ -68,3 +68,6 @@ prompt
 # - .env (environment variables — needed for build)
 # - vercel.json (deployment config)
 # - package.json (dependencies)
+
+.vercel
+.env*

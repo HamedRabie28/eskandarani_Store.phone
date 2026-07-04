@@ -7,8 +7,9 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// Use PostgreSQL for production on Vercel.
-// For local development, use a local PostgreSQL database or configure DATABASE_URL accordingly.
+// This repository is configured for PostgreSQL on Vercel.
+// Local development also requires a PostgreSQL DATABASE_URL.
+// Prisma requires a literal provider value in schema.prisma.
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")

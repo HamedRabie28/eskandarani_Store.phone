@@ -4,7 +4,8 @@
  * Creates: brands, categories, products, variants, coupons, shipping, reviews, settings.
  */
 /// <reference types="node" />
-import * as Prisma from '@prisma/client'
+import { PrismaClient } from '@prisma/client'
+import type { Brand, Category, CouponType, CouponTarget, OrderStatus, PaymentStatus, UserRole } from '@prisma/client'
 import { createHash } from 'crypto'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -15,7 +16,7 @@ import type * as pathType from 'path'
 // Ensure editor/type-checker recognizes the Node globals in this standalone script
 declare const process: NodeJS.Process
 
-const db = new Prisma.PrismaClient()
+const db = new PrismaClient()
 
 type SeedProduct = {
   n: string
@@ -54,7 +55,7 @@ async function main() {
     create: {
       email: adminEmail,
       name: 'Store Admin',
-      role: Prisma.UserRole.ADMIN,
+      role: 'ADMIN' as UserRole,
       passwordHash: adminPass,
       phone: '+201000000000',
     },
@@ -72,7 +73,7 @@ async function main() {
     { name: 'Nothing', slug: 'nothing', country: 'UK', description: 'ناثنغ — تصميم شفاف ومستقبل التكنولوجيا' },
     { name: 'Infinix', slug: 'infinix', country: 'China', description: 'إنفينيكس — بسعر منافس وأداء قوي' },
   ]
-  const brands: Prisma.Brand[] = []
+  const brands: Brand[] = []
   for (const b of brandData) {
     const logoUrl = localImage('brands', b.slug)
     const brand = await db.brand.upsert({
@@ -95,7 +96,7 @@ async function main() {
     { name: 'كاميرات', slug: 'cameras', icon: 'Camera', sortOrder: 7 },
     { name: 'لابتوب', slug: 'laptops', icon: 'Laptop', sortOrder: 8 },
   ]
-  const categories: Prisma.Category[] = []
+  const categories: Category[] = []
   for (const c of categoryData) {
     const imageUrl = localImage('categories', c.slug)
     const cat = await db.category.upsert({
@@ -238,16 +239,16 @@ async function main() {
 
   // ---------- Coupons ----------
   const coupons = [
-    { code: 'WELCOME10', type: Prisma.CouponType.PERCENTAGE, value: 10, description: 'خصم 10% لأول طلب', minSubtotal: 1000, usageLimit: 1000, endsAt: new Date(Date.now() + 90 * 24 * 3600 * 1000) },
-    { code: 'SAVE500', type: Prisma.CouponType.FIXED, value: 500, description: 'خصم 500 جنيه', minSubtotal: 5000, usageLimit: 500, endsAt: new Date(Date.now() + 60 * 24 * 3600 * 1000) },
-    { code: 'FREESHIP', type: Prisma.CouponType.FREE_SHIPPING, value: 0, description: 'شحن مجاني', minSubtotal: 2000, usageLimit: 1000, endsAt: new Date(Date.now() + 30 * 24 * 3600 * 1000) },
-    { code: 'VIP15', type: Prisma.CouponType.PERCENTAGE, value: 15, description: 'خصم 15% للعملاء المميزين', minSubtotal: 10000, usageLimit: 200, endsAt: new Date(Date.now() + 120 * 24 * 3600 * 1000) },
+    { code: 'WELCOME10', type: 'PERCENTAGE' as CouponType, value: 10, description: 'خصم 10% لأول طلب', minSubtotal: 1000, usageLimit: 1000, endsAt: new Date(Date.now() + 90 * 24 * 3600 * 1000) },
+    { code: 'SAVE500', type: 'FIXED' as CouponType, value: 500, description: 'خصم 500 جنيه', minSubtotal: 5000, usageLimit: 500, endsAt: new Date(Date.now() + 60 * 24 * 3600 * 1000) },
+    { code: 'FREESHIP', type: 'FREE_SHIPPING' as CouponType, value: 0, description: 'شحن مجاني', minSubtotal: 2000, usageLimit: 1000, endsAt: new Date(Date.now() + 30 * 24 * 3600 * 1000) },
+    { code: 'VIP15', type: 'PERCENTAGE' as CouponType, value: 15, description: 'خصم 15% للعملاء المميزين', minSubtotal: 10000, usageLimit: 200, endsAt: new Date(Date.now() + 120 * 24 * 3600 * 1000) },
   ]
   for (const c of coupons) {
     await db.coupon.upsert({
       where: { code: c.code },
       update: {},
-      create: { ...c, startsAt: new Date(), isActive: true, appliesTo: Prisma.CouponTarget.ALL },
+      create: { ...c, startsAt: new Date(), isActive: true, appliesTo: 'ALL' as CouponTarget },
     })
   }
   console.log(`  ✓ ${coupons.length} coupons`)
@@ -303,8 +304,8 @@ async function main() {
   console.log(`  ✓ ${reviewCount} reviews`)
 
   // ---------- Sample orders ----------
-  const orderStatuses = [Prisma.OrderStatus.PENDING, Prisma.OrderStatus.CONFIRMED, Prisma.OrderStatus.SHIPPED, Prisma.OrderStatus.DELIVERED, Prisma.OrderStatus.DELIVERED, Prisma.OrderStatus.DELIVERED]
-  const payStatuses = [Prisma.PaymentStatus.PAID, Prisma.PaymentStatus.PAID, Prisma.PaymentStatus.PAID, Prisma.PaymentStatus.PENDING]
+  const orderStatuses: OrderStatus[] = ['PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'DELIVERED', 'DELIVERED']
+  const payStatuses: PaymentStatus[] = ['PAID', 'PAID', 'PAID', 'PENDING']
   for (let i = 0; i < 8; i++) {
     const dateOffset = i * 3 * 24 * 3600 * 1000
     const product = pick(products, i + 3)

@@ -56,8 +56,10 @@ datasource db {
 3. **قبل Deploy**، أضف Environment Variables:
    - Key: `DATABASE_URL`
    - Value: `postgresql://...` (رابط قاعدة البيانات)
-4. اضغط **Deploy**
-5. انتظر 2-3 دقائق
+4. في الملف `vercel.json` موجود الآن build command يقوم بإنشاء الجداول قبل البناء:
+   - `npx prisma db push --schema=prisma/schema.prisma && next build`
+5. اضغط **Deploy**
+6. انتظر 2-3 دقائق
 
 ## الخطوة 5: تعبئة البيانات الأولية
 
