@@ -17,7 +17,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { useCreateProduct, useUpdateProduct, useAdminBrands, useAdminCategories, useAdminProduct } from '@/shared/hooks/admin-queries'
 import { useUploadImage } from '@/shared/hooks/admin-queries'
 import { MultiImageUpload, ImageUpload } from './image-upload'
-import { Loader2, Save, X, Plus, Trash2, Package, DollarSign, Tag, Layers, Image as ImageIcon, Settings } from 'lucide-react'
+import { Loader2, Save, X, Plus, Trash2, Package, DollarSign, Tag, Layers, Image as ImageIcon, Settings, Minus } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface ProductFormProps {
@@ -32,6 +32,7 @@ interface Variant {
   sku: string
   price: number | null
   stock: number
+  reservedStock?: number
   attributes: string | null
   isActive: boolean
 }
@@ -105,6 +106,7 @@ function ProductFormInner({
   const [variants, setVariants] = useState<any[]>(
     existingProduct?.variants?.map((v: any) => ({
       id: v.id, name: v.name, sku: v.sku, price: v.price, stock: v.stock,
+      reservedStock: v.reservedStock ?? 0,
       attributes: v.attributes, isActive: v.isActive,
     })) ?? []
   )
@@ -142,7 +144,7 @@ function ProductFormInner({
   const addVariant = () => {
     setVariants([...variants, {
       name: '', sku: `${form.sku}-${variants.length + 1}`.toUpperCase(), price: null,
-      stock: 0, attributes: null, isActive: true,
+      stock: 0, reservedStock: 0, attributes: null, isActive: true,
     }])
   }
 
@@ -326,8 +328,12 @@ function ProductFormInner({
                             <Plus className="size-4" />
                           </Button>
                         </div>
-                        {v.stock <= 5 && (
-                          <p className="text-[10px] text-warning mt-1">المخزون منخفض للغاية: {v.stock} قطع</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-[10px] text-muted-foreground">محجوز: {v.reservedStock ?? 0}</span>
+                          <span className="text-[10px] text-warning">متاح: {Math.max(0, (v.stock ?? 0) - (v.reservedStock ?? 0))}</span>
+                        </div>
+                        {v.stock - (v.reservedStock ?? 0) <= 5 && (
+                          <p className="text-[10px] text-warning mt-1">المخزون المتاح منخفض للغاية: {Math.max(0, v.stock - (v.reservedStock ?? 0))} قطع</p>
                         )}
                       </div>
                       <div className="col-span-6 sm:col-span-2 flex items-center gap-1">
