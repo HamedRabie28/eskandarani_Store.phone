@@ -61,6 +61,7 @@ const variantSchema = z.object({
   sku: z.string().min(1),
   price: z.number().nullable().optional(),
   stock: z.number().int().min(0).default(0),
+  reservedStock: z.number().int().min(0).default(0),
   attributes: z.string().nullable().optional(),
   isActive: z.boolean().default(true),
 })
@@ -131,6 +132,7 @@ export async function POST(req: NextRequest) {
         images: d.images.length > 0 ? { create: d.images } : undefined,
         variants: d.variants.length > 0 ? { create: d.variants.map(v => ({
           name: v.name, sku: v.sku, price: v.price, stock: v.stock,
+          reservedStock: v.reservedStock ?? 0,
           attributes: v.attributes, isActive: v.isActive,
         })) } : undefined,
       },

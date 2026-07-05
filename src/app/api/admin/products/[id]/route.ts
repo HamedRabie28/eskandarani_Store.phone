@@ -58,6 +58,7 @@ const fullUpdateSchema = z.object({
     sku: z.string(),
     price: z.number().nullable().optional(),
     stock: z.number().int().min(0).default(0),
+    reservedStock: z.number().int().min(0).default(0),
     attributes: z.string().nullable().optional(),
     isActive: z.boolean().default(true),
   })).optional(),
@@ -116,15 +117,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
             await tx.productVariant.update({
               where: { id: v.id },
               data: {
-                name: v.name, sku: v.sku, price: v.price, stock: v.stock,
-                attributes: v.attributes, isActive: v.isActive,
+                    name: v.name, sku: v.sku, price: v.price, stock: v.stock, reservedStock: v.reservedStock ?? 0,
+                    attributes: v.attributes, isActive: v.isActive,
               },
             })
           } else {
             await tx.productVariant.create({
               data: {
                 productId: id, name: v.name, sku: v.sku, price: v.price, stock: v.stock,
-                attributes: v.attributes, isActive: v.isActive,
+                    reservedStock: v.reservedStock ?? 0,
+                    attributes: v.attributes, isActive: v.isActive,
               },
             })
           }
