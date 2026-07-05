@@ -277,13 +277,16 @@ function ProductFormInner({
 
             {/* Variants */}
             <section>
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
                 <h3 className="font-bold flex items-center gap-2 text-sm">
                   <Layers className="size-4 text-primary" /> النسخ (Variants)
                 </h3>
-                <Button type="button" size="sm" variant="outline" onClick={addVariant} className="gap-1">
-                  <Plus className="size-4" /> إضافة نسخة
-                </Button>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">إجمالي المخزون: {variants.reduce((sum, v) => sum + Math.max(0, v.stock), 0)}</span>
+                  <Button type="button" size="sm" variant="outline" onClick={addVariant} className="gap-1">
+                    <Plus className="size-4" /> إضافة نسخة
+                  </Button>
+                </div>
               </div>
               {variants.length === 0 ? (
                 <div className="text-center py-6 text-sm text-muted-foreground bg-accent/30 rounded-xl">
@@ -303,11 +306,29 @@ function ProductFormInner({
                       </div>
                       <div className="col-span-6 sm:col-span-2">
                         <Label className="text-[10px]">السعر</Label>
-                        <Input type="number" value={v.price ?? ''} onChange={(e) => updateVariant(i, 'price', e.target.value ? Number(e.target.value) : null)} className="h-9" />
+                        <Input type="number" min={0} value={v.price ?? ''} onChange={(e) => updateVariant(i, 'price', e.target.value ? Number(e.target.value) : null)} className="h-9" />
                       </div>
                       <div className="col-span-6 sm:col-span-2">
                         <Label className="text-[10px]">المخزون</Label>
-                        <Input type="number" value={v.stock} onChange={(e) => updateVariant(i, 'stock', Number(e.target.value))} className="h-9" />
+                        <div className="flex items-center gap-1 mt-1">
+                          <Button type="button" size="icon" variant="outline" className="size-9" onClick={() => updateVariant(i, 'stock', Math.max(0, v.stock - 1))} aria-label="نقص" disabled={v.stock <= 0}>
+                            <Minus className="size-4" />
+                          </Button>
+                          <Input
+                            type="number"
+                            min={0}
+                            value={v.stock}
+                            onChange={(e) => updateVariant(i, 'stock', Math.max(0, Number(e.target.value) || 0))}
+                            className="h-9 text-center"
+                            inputMode="numeric"
+                          />
+                          <Button type="button" size="icon" variant="outline" className="size-9" onClick={() => updateVariant(i, 'stock', v.stock + 1)} aria-label="زيادة">
+                            <Plus className="size-4" />
+                          </Button>
+                        </div>
+                        {v.stock <= 5 && (
+                          <p className="text-[10px] text-warning mt-1">المخزون منخفض للغاية: {v.stock} قطع</p>
+                        )}
                       </div>
                       <div className="col-span-6 sm:col-span-2 flex items-center gap-1">
                         <label className="flex items-center gap-1 text-xs">

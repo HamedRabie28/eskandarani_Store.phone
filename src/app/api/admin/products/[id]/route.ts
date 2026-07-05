@@ -57,7 +57,7 @@ const fullUpdateSchema = z.object({
     name: z.string(),
     sku: z.string(),
     price: z.number().nullable().optional(),
-    stock: z.number().int().default(0),
+    stock: z.number().int().min(0).default(0),
     attributes: z.string().nullable().optional(),
     isActive: z.boolean().default(true),
   })).optional(),

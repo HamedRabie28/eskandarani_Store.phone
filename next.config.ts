@@ -3,9 +3,6 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   reactStrictMode: false,
   images: {
     remotePatterns: [
@@ -19,6 +16,11 @@ const nextConfig = {
   compress: true,
   experimental: {
     optimizePackageImports: ["lucide-react", "recharts"],
+  },
+  turbopack: {
+    // Ensure Turbopack picks this folder as the workspace root (absolute path)
+    // __dirname will be the directory of this config file at runtime
+    root: __dirname,
   },
 };
 

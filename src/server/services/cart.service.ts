@@ -48,7 +48,7 @@ export const cartService = {
       price: i.price,
       quantity: i.quantity,
       stock: i.variant ? Math.max(0, i.variant.stock - i.variant.reservedStock) : 0,
-      maxQuantity: Math.min(99, i.variant ? i.variant.stock : 99),
+      maxQuantity: Math.min(99, i.variant ? Math.max(0, i.variant.stock - i.variant.reservedStock) : 99),
     }))
   },
 
@@ -94,7 +94,7 @@ export const cartService = {
     const line = await db.cartItem.findUnique({ where: { id: lineId }, include: { variant: true } })
     if (!line) throw new Error('العنصر غير موجود في السلة')
 
-    const available = line.variant ? line.variant.stock : 99
+    const available = line.variant ? Math.max(0, line.variant.stock - line.variant.reservedStock) : 99
     if (quantity > available) throw new Error(`الكمية المتاحة: ${available}`)
 
     await db.cartItem.update({ where: { id: lineId }, data: { quantity } })

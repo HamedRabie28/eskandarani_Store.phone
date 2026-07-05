@@ -1,0 +1,62 @@
+
+> askandarani-phone@1.0.0 build
+> next build
+
+▲ Next.js 16.2.10 (Turbopack)
+- Environments: .env.local, .env.production, .env
+- Experiments (use with caution):
+  · optimizePackageImports
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 23.2s
+  Skipping validation of types
+  Finished TypeScript config validation in 64ms ...
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/25) ...
+  Generating static pages using 7 workers (6/25) 
+  Generating static pages using 7 workers (12/25) 
+  Generating static pages using 7 workers (18/25) 
+✓ Generating static pages using 7 workers (25/25) in 27.3s
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api
+├ ƒ /api/admin/brands
+├ ƒ /api/admin/brands/[id]
+├ ƒ /api/admin/categories
+├ ƒ /api/admin/categories/[id]
+├ ƒ /api/admin/coupons
+├ ƒ /api/admin/coupons/[id]
+├ ƒ /api/admin/metrics
+├ ƒ /api/admin/orders
+├ ƒ /api/admin/products
+├ ƒ /api/admin/products/[id]
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+├ ƒ /api/cart/add
+├ ƒ /api/cart/coupon
+├ ƒ /api/cart/lines
+├ ƒ /api/cart/remove
+├ ƒ /api/cart/update
+├ ƒ /api/catalog/home
+├ ƒ /api/checkout/place
+├ ƒ /api/coupons/validate
+├ ƒ /api/library
+├ ƒ /api/orders
+├ ƒ /api/orders/reorder
+├ ƒ /api/products/[slug]
+├ ƒ /api/products/list
+├ ƒ /api/shipping/options
+├ ○ /manifest.webmanifest
+└ ƒ /sitemap.xml
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

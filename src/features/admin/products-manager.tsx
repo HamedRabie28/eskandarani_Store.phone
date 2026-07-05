@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
-import { Search, Plus, Pencil, Trash2, Loader2, Package, Eye, Star } from 'lucide-react'
+import { Search, Plus, Pencil, Trash2, Loader2, Package, Eye, Star, Tag } from 'lucide-react'
 import { formatPrice } from '@/lib/format'
 import { ProductForm } from './product-form'
 import { toast } from 'sonner'
@@ -127,7 +127,7 @@ export function ProductsManager() {
               </TableHeader>
               <TableBody>
                 {data?.products.map((p: any) => {
-                  const totalStock = p.variants.reduce((s: number, v: any) => s + v.stock, 0)
+                  const totalStock = p.variants.reduce((s: number, v: any) => s + Math.max(0, v.stock - (v.reservedStock ?? 0)), 0)
                   return (
                     <TableRow key={p.id}>
                       <TableCell>
@@ -217,5 +217,3 @@ function StatBox({ icon: Icon, label, value, color }: any) {
     </Card>
   )
 }
-
-import { Tag } from 'lucide-react'

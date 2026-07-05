@@ -3,24 +3,9 @@
  * Premium Dark + Gold theme based on uploaded logo.
  */
 import type { Metadata, Viewport } from 'next'
-import { Cairo, Tajawal } from 'next/font/google'
 import { ThemeProvider } from 'next-themes'
 import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
-
-const cairo = Cairo({
-  subsets: ['arabic', 'latin'],
-  variable: '--font-cairo',
-  display: 'swap',
-  weight: ['400', '500', '600', '700', '800', '900'],
-})
-
-const tajawal = Tajawal({
-  subsets: ['arabic', 'latin'],
-  variable: '--font-tajawal',
-  display: 'swap',
-  weight: ['400', '500', '700', '800', '900'],
-})
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://askandarani.phone'),
@@ -72,7 +57,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ar" dir="rtl" suppressHydrationWarning className={`${cairo.variable} ${tajawal.variable}`}>
+    <html lang="ar" dir="rtl" suppressHydrationWarning>
       <head>
         <script
           type="application/ld+json"

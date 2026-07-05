@@ -29,17 +29,20 @@ jobs:
       - name: Generate Prisma client
         run: npx prisma generate --schema=prisma/schema.prisma
 
-      - name: Lint (if available)
-        run: npm run lint --if-present
+      - name: Lint
+        run: npm run lint
 
-      - name: Type-check
-        run: npx tsc --project scripts/tsconfig.json --noEmit
+      - name: Type-check app
+        run: npx tsc --project tsconfig.json --noEmit
+
+      - name: Type-check scripts
+        run: npx tsc --project tsconfig.scripts.json --noEmit
 
       - name: Run tests (if available)
         run: npm test --if-present
 
       - name: Build
-        run: npm run build --if-present
+        run: npm run build
 
       - name: Optional: Push Prisma schema to DB
         if: env.DATABASE_URL != '' && github.ref == 'refs/heads/main'

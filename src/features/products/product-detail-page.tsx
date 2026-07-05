@@ -73,8 +73,9 @@ function ProductDetailInner({ slug }: { slug: string }) {
   const inWishlist = wishlist.has(product.id)
   const variant = product.variants.find(v => v.id === selectedVariant) ?? product.variants[0]
   const unitPrice = variant?.price ?? product.price
-  const inStock = variant ? variant.stock > 0 : product.inStock
-  const maxQty = variant ? Math.min(99, variant.stock) : 99
+  const availableStock = variant ? Math.max(0, variant.stock - (variant.reservedStock ?? 0)) : product.inStock ? 99 : 0
+  const inStock = availableStock > 0
+  const maxQty = variant ? Math.min(99, availableStock) : 99
   const mainImage = product.images[selectedImage]?.url ?? product.imageUrl
 
   const handleAddToCart = () => {
@@ -215,8 +216,8 @@ function ProductDetailInner({ slug }: { slug: string }) {
                 غير متوفر حالياً
               </Badge>
             )}
-            {variant && variant.stock <= 5 && variant.stock > 0 && (
-              <span className="text-xs text-warning mr-2">باقي {variant.stock} قطع فقط!</span>
+            {variant && availableStock <= 5 && availableStock > 0 && (
+              <span className="text-xs text-warning mr-2">باقي {availableStock} قطع فقط!</span>
             )}
           </div>
 
@@ -225,41 +226,63 @@ function ProductDetailInner({ slug }: { slug: string }) {
             <div className="mb-5">
               <div className="text-sm font-semibold mb-2">الخيارات المتاحة</div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {product.variants.map(v => (
-                  <button
-                    key={v.id}
-                    onClick={() => setSelectedVariant(v.id)}
-                    disabled={v.stock === 0}
-                    className={cn(
-                      "p-3 rounded-xl border text-right transition-all disabled:opacity-50",
-                      (variant?.id === v.id) ? "border-primary bg-accent shadow-soft" : "border-border hover:border-primary/50"
-                    )}
-                  >
-                    <div className="text-xs font-medium line-clamp-1">{v.name}</div>
-                    <div className="text-xs text-primary font-bold mt-1">
-                      {v.price ? formatPrice(v.price) : formatPrice(product.price)}
-                    </div>
-                  </button>
-                ))}
+                {product.variants.map(v => {
+                  const variantAvailable = Math.max(0, v.stock - (v.reservedStock ?? 0))
+                  return (
+                    <button
+                      key={v.id}
+                      onClick={() => setSelectedVariant(v.id)}
+                      disabled={variantAvailable === 0}
+                      className={cn(
+                        "p-3 rounded-xl border text-right transition-all disabled:opacity-50",
+                        (variant?.id === v.id) ? "border-primary bg-accent shadow-soft" : "border-border hover:border-primary/50"
+                      )}
+                    >
+                      <div className="text-xs font-medium line-clamp-1">{v.name}</div>
+                      <div className="text-xs text-primary font-bold mt-1">
+                        {v.price ? formatPrice(v.price) : formatPrice(product.price)}
+                      </div>
+                      {variantAvailable === 0 ? (
+                        <div className="text-[10px] text-destructive mt-1">غير متوفر</div>
+                      ) : variantAvailable <= 5 ? (
+                        <div className="text-[10px] text-warning mt-1">باقي {variantAvailable}</div>
+                      ) : null}
+                    </button>
+                  )
+                })}
               </div>
             </div>
           )}
 
           {/* Quantity + Add to cart */}
           <div className="flex flex-col sm:flex-row gap-3 mb-4">
-            <div className="flex items-center border rounded-xl h-12 shrink-0">
+            <div className="flex items-center border rounded-xl h-12 shrink-0 overflow-hidden">
               <button
                 onClick={() => setQuantity(q => Math.max(1, q - 1))}
                 disabled={quantity <= 1}
-                className="size-12 grid place-items-center hover:bg-accent rounded-r-xl disabled:opacity-50"
+                className="size-12 grid place-items-center hover:bg-accent disabled:opacity-50"
+                aria-label="نقص عدد المنتج"
               >
                 <Minus className="size-4" />
               </button>
-              <span className="w-12 text-center font-semibold">{quantity}</span>
+              <Input
+                type="number"
+                min={1}
+                max={maxQty}
+                value={quantity}
+                onChange={(e) => {
+                  const value = Number(e.target.value)
+                  setQuantity(() => Math.max(1, Math.min(maxQty, Number.isNaN(value) ? 1 : value)))
+                }}
+                className="h-12 w-20 text-center border-x border-border rounded-none"
+                inputMode="numeric"
+                aria-label="عدد المنتج"
+              />
               <button
                 onClick={() => setQuantity(q => Math.min(maxQty, q + 1))}
                 disabled={quantity >= maxQty}
-                className="size-12 grid place-items-center hover:bg-accent rounded-l-xl disabled:opacity-50"
+                className="size-12 grid place-items-center hover:bg-accent disabled:opacity-50"
+                aria-label="زيادة عدد المنتج"
               >
                 <Plus className="size-4" />
               </button>
