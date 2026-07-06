@@ -11,6 +11,7 @@
     "db:generate": "prisma generate --schema=prisma/schema.prisma",
     "db:migrate": "prisma migrate dev --schema=prisma/schema.prisma",
     "db:reset": "prisma migrate reset --schema=prisma/schema.prisma",
+    "db:clear": "npx tsx scripts/clear-db.ts",
     "seed": "npx tsx scripts/seed.ts",
     "postinstall": "prisma generate --schema=prisma/schema.prisma"
   },

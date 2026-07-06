@@ -59,9 +59,16 @@ DATABASE_URL="your-vercel-postgres-url" npm run seed
 ```bash
 npm install
 npm run db:push      # إنشاء قاعدة البيانات
+npm run db:clear     # مسح جميع بيانات الموقع مع الاحتفاظ بحساب الأدمن
 npm run seed         # تعبئة البيانات الأولية
 npm run dev          # تشغيل السيرفر
 ```
+
+> لإزالة بيانات الموقع بالكامل مع الاحتفاظ بمستخدم الأدمن فقط، يمكنك استخدام:
+> ```bash
+> ADMIN_EMAIL="admin@askandarani.phone" npm run db:clear
+> ```
+
 # ملاحظة
 تحتاج إلى إعداد `DATABASE_URL` لقاعدة PostgreSQL محلية لأن مخطط Prisma يستخدم PostgreSQL.
 
