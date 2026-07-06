@@ -44,6 +44,7 @@ export interface ProductDetail extends ProductCardData {
     sku: string
     price: number | null
     stock: number
+    reservedStock: number
     attributes: Record<string, string> | null
   }[]
   reviews: {

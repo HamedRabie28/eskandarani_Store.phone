@@ -2,6 +2,7 @@
  * GET    /api/admin/brands — list all
  * POST   /api/admin/brands — create { name, slug?, description?, logoUrl?, country?, isActive? }
  */
+import { requireAdmin } from '@/server/services/auth.service'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { z } from 'zod'
@@ -32,6 +33,7 @@ const createSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    await requireAdmin();
     const body = await req.json()
     const parsed = createSchema.safeParse(body)
     if (!parsed.success) {

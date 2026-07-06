@@ -3,12 +3,14 @@
  * PATCH  /api/admin/products/[id] — update product (with images & variants sync)
  * DELETE /api/admin/products/[id] — soft delete
  */
+import { requireAdmin } from '@/server/services/auth.service'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { z } from 'zod'
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    await requireAdmin();
     const { id } = await params
     const product = await db.product.findUnique({
       where: { id },
@@ -66,6 +68,7 @@ const fullUpdateSchema = z.object({
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    await requireAdmin();
     const { id } = await params
     const body = await req.json()
     const parsed = fullUpdateSchema.safeParse(body)
@@ -147,6 +150,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    await requireAdmin();
     const { id } = await params
     // Soft delete
     await db.product.update({ where: { id }, data: { deletedAt: new Date(), isActive: false } })

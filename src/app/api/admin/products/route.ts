@@ -8,6 +8,7 @@
  * PATCH  /api/admin/products — update (uses [id] route)
  * DELETE /api/admin/products/[id] — soft delete
  */
+import { requireAdmin } from '@/server/services/auth.service'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { Prisma } from '@prisma/client'
@@ -19,6 +20,7 @@ function slugify(s: string): string {
 
 export async function GET(req: NextRequest) {
   try {
+    await requireAdmin();
     const sp = req.nextUrl.searchParams
     const search = sp.get('search') ?? undefined
     const brandId = sp.get('brandId') ?? undefined
@@ -93,6 +95,7 @@ const createSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    await requireAdmin();
     const body = await req.json()
     const parsed = createSchema.safeParse(body)
     if (!parsed.success) {
@@ -173,6 +176,7 @@ const updateSchema = z.object({
 
 export async function PATCH(req: NextRequest) {
   try {
+    await requireAdmin();
     const body = await req.json()
     const { id, ...data } = body
     if (!id) return NextResponse.json({ error: 'معرّف المنتج مطلوب' }, { status: 400 })

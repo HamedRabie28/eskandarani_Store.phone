@@ -2,6 +2,7 @@
  * PATCH  /api/admin/brands/[id] — update brand
  * DELETE /api/admin/brands/[id] — delete brand (cascade products keep brandId null)
  */
+import { requireAdmin } from '@/server/services/auth.service'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { z } from 'zod'
@@ -17,6 +18,7 @@ const updateSchema = z.object({
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    await requireAdmin();
     const { id } = await params
     const body = await req.json()
     const parsed = updateSchema.safeParse(body)
@@ -32,6 +34,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    await requireAdmin();
     const { id } = await params
     // Check if there are products using this brand
     const productsCount = await db.product.count({ where: { brandId: id } })

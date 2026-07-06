@@ -2,6 +2,7 @@
  * PATCH  /api/admin/coupons/[id] — update
  * DELETE /api/admin/coupons/[id] — delete
  */
+import { requireAdmin } from '@/server/services/auth.service'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { CouponType, CouponTarget } from '@prisma/client'
@@ -25,6 +26,7 @@ const schema = z.object({
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    await requireAdmin();
     const { id } = await params
     const body = await req.json()
     const parsed = schema.safeParse(body)
@@ -44,6 +46,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    await requireAdmin();
     const { id } = await params
     await db.coupon.delete({ where: { id } })
     return NextResponse.json({ success: true })

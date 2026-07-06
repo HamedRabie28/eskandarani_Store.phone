@@ -5,6 +5,7 @@
 import type { Metadata, Viewport } from 'next'
 import { ThemeProvider } from 'next-themes'
 import { Toaster } from '@/components/ui/sonner'
+import ServiceWorkerRegistrar from '@/components/pwa/ServiceWorkerRegistrar'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -82,11 +83,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             }),
           }}
         />
+        {/* PWA meta tags */}
+        <link rel="apple-touch-icon" href="/askandarani-brand-logo.svg" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="أسكندراني" />
       </head>
       <body className="font-sans antialiased min-h-screen flex flex-col dark">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
           {children}
           <Toaster position="top-center" richColors closeButton />
+          <ServiceWorkerRegistrar />
         </ThemeProvider>
       </body>
     </html>

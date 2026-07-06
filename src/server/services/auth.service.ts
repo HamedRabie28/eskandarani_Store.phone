@@ -17,6 +17,7 @@ import { createHash, randomBytes } from 'crypto'
 import { cookies } from 'next/headers'
 
 const SESSION_COOKIE = 'ask-admin-session'
+const CUSTOMER_SESSION_COOKIE = 'ask-customer-session'
 const SESSION_MAX_AGE = 7 * 24 * 60 * 60 // 7 days in seconds
 
 /**
@@ -154,4 +155,117 @@ export interface AdminUser {
   role: 'ADMIN' | 'MANAGER' | 'STAFF'
 }
 
-export { SESSION_COOKIE, SESSION_MAX_AGE }
+export interface CustomerUser {
+  id: string
+  email: string
+  name: string | null
+  role: 'CUSTOMER'
+}
+
+/**
+ * Get current customer session from cookie.
+ */
+export async function getCustomerSession(): Promise<CustomerUser | null> {
+  const cookieStore = await cookies()
+  const token = cookieStore.get(CUSTOMER_SESSION_COOKIE)?.value
+  if (!token) return null
+
+  const session = await db.session.findUnique({
+    where: { token },
+    include: { user: true },
+  })
+  if (!session || !session.user) return null
+
+  if (session.expiresAt < new Date()) {
+    await db.session.delete({ where: { id: session.id } }).catch(() => {})
+    return null
+  }
+
+  if (session.user.role !== 'CUSTOMER') return null
+
+  return {
+    id: session.user.id,
+    email: session.user.email,
+    name: session.user.name,
+    role: 'CUSTOMER',
+  }
+}
+
+/**
+ * Customer Login
+ */
+export async function customerLogin(email: string, password: string): Promise<{ user: CustomerUser; token: string } | null> {
+  const user = await db.user.findUnique({
+    where: { email: email.toLowerCase().trim() },
+  })
+  if (!user || !user.passwordHash || user.role !== 'CUSTOMER') return null
+  if (!verifyPassword(password, user.passwordHash)) return null
+
+  const token = generateSessionToken()
+  const expiresAt = new Date(Date.now() + SESSION_MAX_AGE * 1000)
+  await db.session.create({
+    data: { userId: user.id, token, expiresAt },
+  })
+
+  const cookieStore = await cookies()
+  cookieStore.set(CUSTOMER_SESSION_COOKIE, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: SESSION_MAX_AGE,
+    path: '/',
+  })
+
+  return {
+    user: { id: user.id, email: user.email, name: user.name, role: 'CUSTOMER' },
+    token,
+  }
+}
+
+/**
+ * Customer Register
+ */
+export async function customerRegister(name: string, email: string, password: string): Promise<{ user: CustomerUser; token: string } | null> {
+  const existing = await db.user.findUnique({ where: { email: email.toLowerCase().trim() } })
+  if (existing) throw new Error('البريد الإلكتروني مستخدم بالفعل')
+
+  const user = await db.user.create({
+    data: {
+      name,
+      email: email.toLowerCase().trim(),
+      passwordHash: hashPassword(password),
+      role: 'CUSTOMER',
+    }
+  })
+
+  const token = generateSessionToken()
+  const expiresAt = new Date(Date.now() + SESSION_MAX_AGE * 1000)
+  await db.session.create({
+    data: { userId: user.id, token, expiresAt },
+  })
+
+  const cookieStore = await cookies()
+  cookieStore.set(CUSTOMER_SESSION_COOKIE, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: SESSION_MAX_AGE,
+    path: '/',
+  })
+
+  return {
+    user: { id: user.id, email: user.email, name: user.name, role: 'CUSTOMER' },
+    token,
+  }
+}
+
+export async function customerLogout(): Promise<void> {
+  const cookieStore = await cookies()
+  const token = cookieStore.get(CUSTOMER_SESSION_COOKIE)?.value
+  if (token) {
+    await db.session.deleteMany({ where: { token } }).catch(() => {})
+  }
+  cookieStore.delete(CUSTOMER_SESSION_COOKIE)
+}
+
+export { SESSION_COOKIE, CUSTOMER_SESSION_COOKIE, SESSION_MAX_AGE }

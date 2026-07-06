@@ -2,6 +2,7 @@
  * GET /api/admin/orders — all orders with pagination
  * PATCH /api/admin/orders — update order status { orderId, status, note? }
  */
+import { requireAdmin } from '@/server/services/auth.service'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { orderService } from '@/server/services/order.service'
@@ -9,6 +10,7 @@ import { z } from 'zod'
 
 export async function GET(req: NextRequest) {
   try {
+    await requireAdmin();
     const sp = req.nextUrl.searchParams
     const status = sp.get('status') ?? undefined
     const limit = Number(sp.get('limit') ?? 20)
@@ -35,6 +37,7 @@ const updateSchema = z.object({
 
 export async function PATCH(req: NextRequest) {
   try {
+    await requireAdmin();
     const body = await req.json()
     const parsed = updateSchema.safeParse(body)
     if (!parsed.success) return NextResponse.json({ error: 'بيانات غير صحيحة' }, { status: 400 })

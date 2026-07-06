@@ -125,6 +125,7 @@ export const productService = {
         sku: v.sku,
         price: v.price,
         stock: Math.max(0, v.stock - v.reservedStock),
+        reservedStock: v.reservedStock,
         attributes: v.attributes ? safeParse(v.attributes) : null,
       })),
       reviews: p.reviews.map(r => ({

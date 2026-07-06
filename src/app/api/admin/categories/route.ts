@@ -2,6 +2,7 @@
  * GET    /api/admin/categories — list all categories
  * POST   /api/admin/categories — create { name, slug?, description?, imageUrl?, icon?, parentId?, isActive?, sortOrder? }
  */
+import { requireAdmin } from '@/server/services/auth.service'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { z } from 'zod'
@@ -37,6 +38,7 @@ const createSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    await requireAdmin();
     const body = await req.json()
     const parsed = createSchema.safeParse(body)
     if (!parsed.success) {

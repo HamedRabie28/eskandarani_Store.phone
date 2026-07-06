@@ -9,6 +9,7 @@ import type { OrderSummary, OrderStatus, PaymentStatus, CartLine, CheckoutAddres
 import { cartService } from './cart.service'
 import { couponService } from './coupon.service'
 import { shippingService } from './shipping.service'
+import { emailService } from './email.service'
 
 export interface CreateOrderInput {
   userId?: string
@@ -69,6 +70,22 @@ export const orderService = {
           where: { id: line.productId },
           data: { soldCount: { increment: line.quantity } },
         })
+      }
+
+      // Cleanup Cart and Reservations atomically
+      const cartTokens: string[] = []
+      if (input.userId) cartTokens.push(input.userId)
+      if (input.guestToken) cartTokens.push(input.guestToken)
+      
+      for (const token of cartTokens) {
+        // Delete reservations without decrementing reservedStock again (already done above)
+        await tx.inventoryReservation.deleteMany({ where: { token } })
+        
+        // Find and delete cart items
+        const cart = await tx.cart.findFirst({ where: { OR: [{ userId: token }, { guestToken: token }] } })
+        if (cart) {
+          await tx.cartItem.deleteMany({ where: { cartId: cart.id } })
+        }
       }
 
       // Create order
@@ -152,14 +169,8 @@ export const orderService = {
       await couponService.incrementUsage(input.couponCode).catch(() => {})
     }
 
-    // Clear the cart — IMPORTANT: clear for BOTH guest and user (was only clearing for userId)
-    if (input.userId) {
-      await cartService.clear({ userId: input.userId })
-    }
-    // For guest carts, we need the guestToken — pass it through input
-    if (input.guestToken) {
-      await cartService.clear({ guestToken: input.guestToken })
-    }
+    // Trigger order confirmation email in the background
+    emailService.sendOrderConfirmation(order.id).catch(console.error)
 
     const orderSummary = await this.toSummary(order.id)
     if (!orderSummary) throw new Error('Order summary unavailable')
@@ -236,7 +247,25 @@ export const orderService = {
 
     const updatedSummary = await this.toSummary(orderId)
     if (!updatedSummary) throw new Error('Order summary unavailable')
+
+    // Trigger status update email in the background
+    emailService.sendOrderStatusUpdate(orderId, status, note).catch(console.error)
+
     return updatedSummary
+  },
+
+  async updatePaymentStatus(orderId: string, paymentStatus: PaymentStatus, note?: string): Promise<void> {
+    await db.$transaction([
+      db.order.update({ where: { id: orderId }, data: { paymentStatus } }),
+      db.orderStatusHistory.create({
+        data: { 
+          orderId, 
+          status: paymentStatus === 'PAID' ? 'CONFIRMED' : 'PENDING', 
+          note: note ?? `تحديث حالة الدفع إلى: ${paymentStatus}`, 
+          createdAt: new Date() 
+        },
+      }),
+    ])
   },
 
   async cancel(orderId: string, reason: string): Promise<OrderSummary> {
@@ -273,6 +302,10 @@ export const orderService = {
     })
     const canceledSummary = await this.toSummary(orderId)
     if (!canceledSummary) throw new Error('Order summary unavailable')
+
+    // Trigger cancellation email
+    emailService.sendOrderStatusUpdate(orderId, 'CANCELLED', reason).catch(console.error)
+
     return canceledSummary
   },
 

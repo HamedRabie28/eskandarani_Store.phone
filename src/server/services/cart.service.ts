@@ -25,6 +25,10 @@ async function getOrCreateCart(ctx: CartContext) {
   throw new Error('Cart context requires userId or guestToken')
 }
 
+function cartToken(cart: any) {
+  return cart.guestToken ?? cart.userId ?? cart.id
+}
+
 export const cartService = {
   async getLines(ctx: CartContext): Promise<CartLine[]> {
     const cart = await getOrCreateCart(ctx)
@@ -72,19 +76,28 @@ export const cartService = {
     const unitPrice = variant.price ?? product.price
     const cart = await getOrCreateCart(ctx)
 
-    const existing = await db.cartItem.findFirst({
-      where: { cartId: cart.id, productId, variantId: variantId ?? null },
+    // Use transaction to update cart item and create/update reservation atomically
+    const token = cartToken(cart)
+    await db.$transaction(async (tx) => {
+      const existing = await tx.cartItem.findFirst({ where: { cartId: cart.id, productId, variantId: variantId ?? null } })
+      if (existing) {
+        const newQty = existing.quantity + quantity
+        if (newQty > available) throw new Error(`الكمية المتاحة: ${available}`)
+        await tx.cartItem.update({ where: { id: existing.id }, data: { quantity: newQty } })
+        // update reservation
+        const res = await tx.inventoryReservation.findFirst({ where: { variantId: variant.id, token } })
+        if (res) {
+          await tx.inventoryReservation.update({ where: { id: res.id }, data: { quantity: { increment: quantity } } })
+        } else {
+          await tx.inventoryReservation.create({ data: { variantId: variant.id, quantity, token, expiresAt: new Date(Date.now() + 1000 * 60 * 30) } })
+        }
+      } else {
+        await tx.cartItem.create({ data: { cartId: cart.id, productId, variantId, quantity, price: unitPrice } })
+        await tx.inventoryReservation.create({ data: { variantId: variant.id, quantity, token, expiresAt: new Date(Date.now() + 1000 * 60 * 30) } })
+      }
+      // increment reservedStock on variant
+      await tx.productVariant.update({ where: { id: variant.id }, data: { reservedStock: { increment: quantity } } })
     })
-
-    if (existing) {
-      const newQty = existing.quantity + quantity
-      if (newQty > available) throw new Error(`الكمية المتاحة: ${available}`)
-      await db.cartItem.update({ where: { id: existing.id }, data: { quantity: newQty } })
-    } else {
-      await db.cartItem.create({
-        data: { cartId: cart.id, productId, variantId, quantity, price: unitPrice },
-      })
-    }
 
     return this.getLines(ctx)
   },
@@ -95,20 +108,73 @@ export const cartService = {
     if (!line) throw new Error('العنصر غير موجود في السلة')
 
     const available = line.variant ? Math.max(0, line.variant.stock - line.variant.reservedStock) : 99
-    if (quantity > available) throw new Error(`الكمية المتاحة: ${available}`)
+    const cart = await getOrCreateCart(ctx)
+    const token = cartToken(cart)
+    const delta = quantity - line.quantity
+    if (delta === 0) return this.getLines(ctx)
+    if (delta > 0 && quantity > available) throw new Error(`الكمية المتاحة: ${available}`)
 
-    await db.cartItem.update({ where: { id: lineId }, data: { quantity } })
+    await db.$transaction(async (tx) => {
+      await tx.cartItem.update({ where: { id: lineId }, data: { quantity } })
+      if (line.variant) {
+        const res = await tx.inventoryReservation.findFirst({ where: { variantId: line.variant.id, token } })
+        if (delta > 0) {
+          if (res) {
+            await tx.inventoryReservation.update({ where: { id: res.id }, data: { quantity: { increment: delta } } })
+          } else {
+            await tx.inventoryReservation.create({ data: { variantId: line.variant.id, quantity: delta, token, expiresAt: new Date(Date.now() + 1000 * 60 * 30) } })
+          }
+          await tx.productVariant.update({ where: { id: line.variant.id }, data: { reservedStock: { increment: delta } } })
+        } else {
+          // decrease reservation
+          const dec = Math.min(res?.quantity ?? 0, -delta)
+          if (res && dec > 0) {
+            if (res.quantity - dec <= 0) {
+              await tx.inventoryReservation.delete({ where: { id: res.id } })
+            } else {
+              await tx.inventoryReservation.update({ where: { id: res.id }, data: { quantity: { decrement: dec } } })
+            }
+            await tx.productVariant.update({ where: { id: line.variant.id }, data: { reservedStock: { decrement: dec } } })
+          }
+        }
+      }
+    })
+
     return this.getLines(ctx)
   },
 
   async remove(ctx: CartContext, lineId: string): Promise<CartLine[]> {
-    await db.cartItem.delete({ where: { id: lineId } })
+    const cart = await getOrCreateCart(ctx)
+    const token = cartToken(cart)
+    const line = await db.cartItem.findUnique({ where: { id: lineId }, include: { variant: true } })
+    if (!line) throw new Error('العنصر غير موجود')
+    await db.$transaction(async (tx) => {
+      await tx.cartItem.delete({ where: { id: lineId } })
+      if (line.variant) {
+        const res = await tx.inventoryReservation.findFirst({ where: { variantId: line.variant.id, token } })
+        const dec = Math.min(res?.quantity ?? 0, line.quantity)
+        if (res && dec > 0) {
+          if (res.quantity - dec <= 0) await tx.inventoryReservation.delete({ where: { id: res.id } })
+          else await tx.inventoryReservation.update({ where: { id: res.id }, data: { quantity: { decrement: dec } } })
+          await tx.productVariant.update({ where: { id: line.variant.id }, data: { reservedStock: { decrement: dec } } })
+        }
+      }
+    })
     return this.getLines(ctx)
   },
 
   async clear(ctx: CartContext): Promise<void> {
     const cart = await getOrCreateCart(ctx)
-    await db.cartItem.deleteMany({ where: { cartId: cart.id } })
+    const token = cartToken(cart)
+    // Find reservations for this cart token and remove them safely
+    await db.$transaction(async (tx) => {
+      const reservations = await tx.inventoryReservation.findMany({ where: { token } })
+      for (const r of reservations) {
+        await tx.productVariant.update({ where: { id: r.variantId }, data: { reservedStock: { decrement: r.quantity } } })
+      }
+      await tx.inventoryReservation.deleteMany({ where: { token } })
+      await tx.cartItem.deleteMany({ where: { cartId: cart.id } })
+    })
   },
 
   async applyCoupon(ctx: CartContext, code: string): Promise<void> {

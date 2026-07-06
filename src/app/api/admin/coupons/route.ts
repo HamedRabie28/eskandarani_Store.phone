@@ -2,6 +2,7 @@
  * GET    /api/admin/coupons — list all
  * POST   /api/admin/coupons — create
  */
+import { requireAdmin } from '@/server/services/auth.service'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { CouponType, CouponTarget } from '@prisma/client'
@@ -9,6 +10,7 @@ import { z } from 'zod'
 
 export async function GET() {
   try {
+    await requireAdmin();
     const coupons = await db.coupon.findMany({ orderBy: { createdAt: 'desc' } })
     return NextResponse.json({ coupons })
   } catch (e: any) {
@@ -34,6 +36,7 @@ const schema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    await requireAdmin();
     const body = await req.json()
     const parsed = schema.safeParse(body)
     if (!parsed.success) {
