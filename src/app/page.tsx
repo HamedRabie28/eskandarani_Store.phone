@@ -27,6 +27,7 @@ import { HomePage } from '@/features/home/home-page'
 import { ProductsPage } from '@/features/products/products-page'
 import { ProductDetailPage } from '@/features/products/product-detail-page'
 import { CheckoutPage } from '@/features/checkout/checkout-page'
+import { PaymobResultPage } from '@/features/checkout/paymob-result-page'
 import { OrderTrackingPage } from '@/features/orders/order-tracking-page'
 import { AdminDashboard } from '@/features/admin/admin-dashboard'
 import { AdminLoginPage } from '@/features/admin/admin-login'
@@ -100,6 +101,7 @@ function AppContent() {
           {view === 'products' && <ProductsPage />}
           {view === 'product-detail' && productSlug && <ProductDetailPage slug={productSlug} />}
           {view === 'checkout' && <CheckoutPage />}
+          {view === 'paymob-result' && <PaymobResultPage />}
           {view === 'order-tracking' && <OrderTrackingPage />}
           {view === 'account' && <AccountPage />}
           {view === 'about' && <AboutPage />}

@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { orderService } from '@/server/services/order.service'
 import { cartService } from '@/server/services/cart.service'
+import { paymobService } from '@/server/services/paymob.service'
 import { getCartContext, ensureGuestToken } from '@/server/lib/cart-context'
 import { z } from 'zod'
 
@@ -67,6 +68,13 @@ export async function POST(req: NextRequest) {
       paymentMethod: parsed.data.paymentMethod,
       customerNotes: parsed.data.customerNotes,
     })
+
+    if (parsed.data.paymentMethod === 'card' || parsed.data.paymentMethod === 'wallet') {
+      const paymentUrl = await paymobService.createPaymentUrl(order, parsed.data.address)
+      return NextResponse.json({ order, paymentUrl }, {
+        headers: res.headers,
+      })
+    }
 
     return NextResponse.json({ order }, {
       headers: res.headers,

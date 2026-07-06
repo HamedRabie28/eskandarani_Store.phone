@@ -9,7 +9,6 @@ import { useUIStore } from '@/shared/stores/ui.store'
 import { useCartStore } from '@/shared/stores/cart.store'
 import { useCart, useShippingOptions, usePlaceOrder } from '@/shared/hooks/queries'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
@@ -165,6 +164,10 @@ export function CheckoutPage() {
       customerNotes,
     }, {
       onSuccess: (data) => {
+        if (data.paymentUrl) {
+          window.location.href = data.paymentUrl
+          return
+        }
         setConfirmedOrder(data.order)
         setStep('confirmation')
         toast.success('تم إنشاء الطلب بنجاح!')
@@ -557,12 +560,15 @@ function Field({
       <Label htmlFor={name} className="text-sm">
         {label} {required && <span className="text-destructive">*</span>}
       </Label>
-      <Input
+      <input
         id={name}
         type={type}
         value={value}
         onChange={e => onChange(e.target.value)}
-        className={cn("mt-1", error && "border-destructive")}
+        className={cn(
+          "mt-1 flex h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs outline-none transition-[color,box-shadow] file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+          error && "border-destructive"
+        )}
       />
       {error && <p className="text-xs text-destructive mt-1">{error}</p>}
     </div>

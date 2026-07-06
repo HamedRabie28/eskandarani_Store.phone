@@ -11,6 +11,7 @@ export type View =
   | 'product-detail'
   | 'cart'
   | 'checkout'
+  | 'paymob-result'
   | 'order-confirmation'
   | 'order-tracking'
   | 'account'

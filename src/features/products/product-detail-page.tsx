@@ -9,7 +9,6 @@ import { useProduct, useAddToCart } from '@/shared/hooks/queries'
 import { useUIStore } from '@/shared/stores/ui.store'
 import { useWishlistStore } from '@/shared/stores/wishlist.store'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -266,7 +265,7 @@ function ProductDetailInner({ slug }: { slug: string }) {
               >
                 <Minus className="size-4" />
               </button>
-              <Input
+              <input
                 type="number"
                 min={1}
                 max={maxQty}
@@ -275,7 +274,7 @@ function ProductDetailInner({ slug }: { slug: string }) {
                   const value = Number(e.target.value)
                   setQuantity(() => Math.max(1, Math.min(maxQty, Number.isNaN(value) ? 1 : value)))
                 }}
-                className="h-12 w-20 text-center border-x border-border rounded-none"
+                className="h-12 w-20 border-x border-border rounded-none bg-transparent px-3 py-1 text-center text-base outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 inputMode="numeric"
                 aria-label="عدد المنتج"
               />
